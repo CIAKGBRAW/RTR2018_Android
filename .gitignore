@@ -1,12 +1,12 @@
 # Built application files
-*.apk
-*.ap_
+**.apk
+**.ap_
 
 # Files for the ART/Dalvik VM
-*.dex
+**.dex
 
 # Java class files
-*.class
+**.class
 
 # Generated files
 **/bin/
@@ -33,7 +33,7 @@
 **/captures/
 
 # IntelliJ
-*.iml
+**.iml
 **/.idea/workspace.xml
 **/.idea/tasks.xml
 **/.idea/gradle.xml
@@ -53,13 +53,13 @@
 **/google-services.json
 
 # Freeline
-freeline.py
-freeline/
-freeline_project_description.json
+**/freeline.py
+**/freeline/
+**/freeline_project_description.json
 
 # fastlane
-fastlane/report.xml
-fastlane/Preview.html
-fastlane/screenshots
-fastlane/test_output
-fastlane/readme.md
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
+**/fastlane/readme.md
