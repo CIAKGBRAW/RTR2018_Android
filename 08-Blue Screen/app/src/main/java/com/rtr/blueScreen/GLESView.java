@@ -121,6 +121,10 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
     }
 
     private void resize(int width, int height) {
+        if (height == 0) {
+            height = 1;
+        }
+
         GLES32.glViewport(0, 0, width, height);
     }
 

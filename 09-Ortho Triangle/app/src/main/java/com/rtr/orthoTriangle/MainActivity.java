@@ -1,4 +1,4 @@
-package com.rtr.blueScreen;
+package com.rtr.orthoTriangle;
 
 // default imports
 import androidx.appcompat.app.AppCompatActivity;    // AppCompatActivity
@@ -13,7 +13,7 @@ import android.graphics.Color;            // Color
 
 public class MainActivity extends AppCompatActivity {
 
-	private GLESView glesView;
+	private GLESView glewView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,10 +36,10 @@ public class MainActivity extends AppCompatActivity {
         this.getWindow().getDecorView().setBackgroundColor(Color.BLACK);
 
         // define our own view
-        glesView = new GLESView(this);
+        glewView = new GLESView(this);
 
         // set this view as our view
-        setContentView(glesView);
+        setContentView(glewView);
     }
 
     @Override
