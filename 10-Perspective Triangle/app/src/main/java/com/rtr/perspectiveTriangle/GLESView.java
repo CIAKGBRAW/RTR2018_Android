@@ -335,16 +335,24 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         GLES32.glUseProgram(shaderProgramObject);
 
         //declaration of matrices
+        float[] translationMatrix = new float[16];
         float[] modelViewMatrix = new float[16];
         float[] modelViewProjectionMatrix = new float[16];
 
         // intialize above matrices to identity
+        Matrix.setIdentityM(translationMatrix, 0);
         Matrix.setIdentityM(modelViewMatrix, 0);
         Matrix.setIdentityM(modelViewProjectionMatrix, 0);
 
         // perform necessary transformations
+        Matrix.translateM(translationMatrix, 0,
+            0.0f, 0.0f, -3.0f);
 
         // do necessary matrix multiplication
+        Matrix.multiplyMM(modelViewMatrix, 0,
+            modelViewMatrix, 0,
+            translationMatrix, 0);
+
         Matrix.multiplyMM(modelViewProjectionMatrix, 0,
             perspectiveProjectionMatrix, 0,
             modelViewMatrix, 0);
