@@ -565,7 +565,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         Matrix.translateM(translationMatrix, 0,
             -1.5f, 0.0f, -6.0f);
 
-        Matrix.rotateM(rotationMatrix, 0,
+        Matrix.setRotateM(rotationMatrix, 0,
             anglePyramid, 0.0f, 1.0f, 0.0f);
 
         // do necessary matrix multiplication
@@ -610,7 +610,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         Matrix.translateM(translationMatrix, 0,
             1.5f, 0.0f, -6.0f);
 
-        Matrix.rotateM(rotationMatrix, 0,
+        Matrix.setRotateM(rotationMatrix, 0,
             angleCube, 1.0f, 1.0f, 1.0f);
 
         Matrix.scaleM(scaleMatrix, 0,

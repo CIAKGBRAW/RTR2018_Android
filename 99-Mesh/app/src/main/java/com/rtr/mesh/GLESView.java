@@ -164,7 +164,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
             "{" +
             "   float dist = distance(vPosition, vec4(0.0));" +
             "   vec4 vPos = vPosition;" +
-            "   vPos.y = sin(dist + u_time);" +
+            "   vPos.y = sin((2.0*dist) + u_time) / dist;" +
             "   gl_Position = u_mvp_matrix * vPos;" +
             "   out_dist = dist;" +
             "}"
@@ -272,7 +272,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         timeUniform = GLES32.glGetUniformLocation(shaderProgramObject, "u_time");
 
         // triangle Position
-        float[] triangleVertices = MeshHelper.generateMeshCoords(-5.0f, 0.5f);
+        float[] triangleVertices = MeshHelper.generateMeshCoords(-5.0f, 0.1f);
         // final float[] triangleVertices = new float[] {
         //     -2.0f, 0.0f, -2.0f,
         //     0.0f, 0.0f, -2.0f,
@@ -394,8 +394,8 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         // bind with textures
 
         // draw necessary scene
-        for(int i = 0; i < 20; i++) {
-            GLES32.glDrawArrays(GLES32.GL_LINE_STRIP, 40*i, 20*2);
+        for(int i = 0; i < 100; i++) {
+            GLES32.glDrawArrays(GLES32.GL_LINE_STRIP, 200*i, 100*2);
         }
 
         // unbind vao
