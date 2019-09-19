@@ -33,6 +33,10 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
     private int mvpUniform;
     private int timeUniform;
 
+    private float[] cameraPos = new float[] {0.0f, 3.0f, -10.0f};
+    private float angleX = 90.0f * (float)Math.PI / 180.0f;
+    private float angleZ = -90.0f * (float)Math.PI / 180.0f;
+
     private float[] perspectiveProjectionMatrix = new float[16];
     private float time = 0.0f;
 
@@ -62,6 +66,9 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
     // abstract method from OnDoubleTapEventListener so must be implemented
     @Override
     public boolean onDoubleTap(MotionEvent e) {
+        cameraPos[0] = 0.0f;
+        cameraPos[1] = 3.0f;
+        cameraPos[2] = -10.0f;
         return(true);
     }
 
@@ -88,6 +95,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
     // abstract method from OnGestureListener so must be implemented
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        System.out.println("RTR: onFling: " + velocityX + ", " + velocityY);
         return(true);
     }
 
@@ -99,8 +107,31 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
     // abstract method from OnGestureListener so must be implemented
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        uninitialize();
-        System.exit(0);
+
+        if (distanceX > 0.0f) {
+            angleX += 0.1f;
+        } else {
+            angleX -= 0.1f;
+        }
+
+        if (distanceY > 0.0f) {
+            angleZ += 0.1f;
+        } else {
+            angleZ -= 0.1f;
+        }
+
+        cameraPos[0] = 10.0f * (float)Math.cos(angleX);
+        cameraPos[2] = 10.0f * (float)Math.sin(angleX);
+
+        if ((cameraPos[0] * cameraPos[0]) + (cameraPos[2] * cameraPos[2]) != 100) {
+            System.out.println("RTR: onScroll: ********** invalid position!");
+        } else {
+            System.out.println("RTR: onScroll: ****************************");
+        }
+
+        System.out.println("RTR: onScroll: " + distanceX + ", " + distanceY);
+        System.out.println("RTR: onScroll: CAMERA" + cameraPos[0] + ", " + cameraPos[2]);
+        System.out.println("RTR: onScroll: ANGLE " + angleX + ", " + angleZ);
         return(true);
     }
 
@@ -164,9 +195,9 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
             "{" +
             "   float dist = distance(vPosition, vec4(0.0));" +
             "   vec4 vPos = vPosition;" +
-            "   vPos.y = sin((2.0*dist) + u_time) / dist;" +
+            "   vPos.y = sin((2.0*dist) + u_time) / (2.0 * dist);" +
             "   gl_Position = u_mvp_matrix * vPos;" +
-            "   out_dist = dist;" +
+            "   out_dist = vPos.y;" +
             "}"
         );
 
@@ -207,7 +238,14 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
             "out vec4 FragColor;" +
             "void main(void)" +
             "{" +
-            "   FragColor = vec4(smoothstep(out_dist, 0.0, 5.0), 1.0, 0.0, 1.0);" +
+            "   if(out_dist > 0.0)" +
+            "   {" +
+            "       FragColor = vec4(out_dist, 1.0, 0.0, 0.2);" +
+            "   }" +
+            "   else" +
+            "   {" +
+            "       FragColor = vec4(-out_dist, 1.0, 0.0, 0.2);" +
+            "   }" +
             "}"
         );
 
@@ -335,6 +373,9 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         GLES32.glEnable(GLES32.GL_DEPTH_TEST);
         GLES32.glDepthFunc(GLES32.GL_LEQUAL);
 
+        GLES32.glEnable(GLES32.GL_BLEND);
+        GLES32.glBlendFunc(GLES32.GL_SRC_ALPHA, GLES32.GL_ONE_MINUS_SRC_ALPHA);
+
         Matrix.setIdentityM(perspectiveProjectionMatrix, 0);
     }
 
@@ -371,7 +412,8 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
 
         // perform necessary transformations
         Matrix.setLookAtM(translationMatrix, 0,
-            0.0f, 3.0f, -10.0f,
+            // 0.0f, 3.0f, -10.0f,
+            cameraPos[0], cameraPos[1], cameraPos[2],
             0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f);
 
@@ -395,7 +437,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
 
         // draw necessary scene
         for(int i = 0; i < 100; i++) {
-            GLES32.glDrawArrays(GLES32.GL_LINE_STRIP, 200*i, 100*2);
+            GLES32.glDrawArrays(GLES32.GL_TRIANGLE_STRIP, 200*i, 100*2);
         }
 
         // unbind vao
