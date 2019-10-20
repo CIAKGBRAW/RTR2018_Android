@@ -1,4 +1,4 @@
-package com.rtr.rotatingArms;
+package com.rtr.rotatingArm;
 
 // default imports
 import androidx.appcompat.app.AppCompatActivity;    // AppCompatActivity

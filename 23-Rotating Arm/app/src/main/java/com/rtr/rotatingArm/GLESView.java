@@ -1,4 +1,4 @@
-package com.rtr.rotatingArms;
+package com.rtr.rotatingArm;
 
 // added by me
 import android.opengl.GLSurfaceView;              // SurfaceView with support of OpenGL
@@ -29,8 +29,12 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
     private int shaderProgramObject;
 
     private int[] vao = new int[1];
-    private int[] vbo = new int[1];
+    private int[] vboPos = new int[1];
     private int mvpUniform;
+
+    private int coords;
+    private int shoulder = 0;
+    private int elbow = 0;
 
     private float[] perspectiveProjectionMatrix = new float[16];
 
@@ -60,6 +64,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
     // abstract method from OnDoubleTapEventListener so must be implemented
     @Override
     public boolean onDoubleTap(MotionEvent e) {
+        shoulder = (shoulder + 3) % 360;
         return(true);
     }
 
@@ -73,6 +78,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
     // abstract method from OnDoubleTapListener so must be implemented
     @Override
     public boolean onSingleTapConfirmed(MotionEvent e) {
+        elbow = (elbow + 3) % 360;
         return(true);
     }
 
@@ -155,10 +161,13 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
             "#version 320 es" +
             "\n" +
             "in vec4 vPosition;" +
+            "in vec4 vColor;" +
             "uniform mat4 u_mvp_matrix;" +
-            "void main(void)" +
+            "out vec4 out_Color;" +
+            "void main (void)" +
             "{" +
             "   gl_Position = u_mvp_matrix * vPosition;" +
+            "   out_Color = vColor;" +
             "}"
         );
 
@@ -195,10 +204,11 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
             "#version 320 es" +
             "\n" +
             "precision highp float;" +
+            "in vec4 out_Color;" +
             "out vec4 FragColor;" +
-            "void main(void)" +
+            "void main (void)" +
             "{" +
-            "   FragColor = vec4(1.0, 1.0, 0.0, 1.0);" +
+            "   FragColor = out_Color;" +
             "}"
         );
 
@@ -236,6 +246,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
 
         // pre-linking binding to vertex attribute
         GLES32.glBindAttribLocation(shaderProgramObject, GLESMacros.AMC_ATTRIBUTE_POSITION, "vPosition");
+        GLES32.glBindAttribLocation(shaderProgramObject, GLESMacros.AMC_ATTRIBUTE_COLOR, "vColor");
 
         // link the shader program
         GLES32.glLinkProgram(shaderProgramObject);
@@ -261,22 +272,21 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         // get unifrom locations
         mvpUniform = GLES32.glGetUniformLocation(shaderProgramObject, "u_mvp_matrix");
 
-        // triangle Position
-        final float[] triangleVertices = new float[] {
-             0.0f,  1.0f, 0.0f,
-            -1.0f, -1.0f, 0.0f,
-             1.0f, -1.0f, 0.0f
-        };
+        float[] sphereVertices  = new float[3*30*31*2];
+        float[] sphereNormals   = new float[3*30*31*2];
+        float[] sphereTexcoords = new float[2*30*31*2];
+        coords = GenerateSphereCoords(0.5f, 30, sphereVertices, sphereNormals, sphereTexcoords);
 
         // create vao
         GLES32.glGenVertexArrays(1, vao, 0);
         GLES32.glBindVertexArray(vao[0]);
 
-        GLES32.glGenBuffers(1, vbo, 0);
-        GLES32.glBindBuffer(GLES32.GL_ARRAY_BUFFER, vbo[0]);
+        // vbo position
+        GLES32.glGenBuffers(1, vboPos, 0);
+        GLES32.glBindBuffer(GLES32.GL_ARRAY_BUFFER, vboPos[0]);
 
         // 1. Allocate buffer directly from native memory
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(triangleVertices.length * 4);
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(sphereVertices.length * 4);
 
         // 2. Arrange the buffer in native byte order
         byteBuffer.order(ByteOrder.nativeOrder());
@@ -285,15 +295,16 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         FloatBuffer positionBuffer = byteBuffer.asFloatBuffer();
 
         // 4. put data in this COOKED buffer
-        positionBuffer.put(triangleVertices);
+        positionBuffer.put(sphereVertices);
 
         // 5. set the array at 0th position of buffer
         positionBuffer.position(0);
 
-        ////
-        GLES32.glBufferData(GLES32.GL_ARRAY_BUFFER, triangleVertices.length * 4, positionBuffer, GLES32.GL_STATIC_DRAW);
+        GLES32.glBufferData(GLES32.GL_ARRAY_BUFFER, sphereVertices.length * 4, positionBuffer, GLES32.GL_STATIC_DRAW);
         GLES32.glVertexAttribPointer(GLESMacros.AMC_ATTRIBUTE_POSITION, 3, GLES32.GL_FLOAT, false, 0, 0);
         GLES32.glEnableVertexAttribArray(GLESMacros.AMC_ATTRIBUTE_POSITION);
+
+        GLES32.glVertexAttrib3f(AMC_ATTRIBUTE_COLOR, 0.5f, 0.35f, 0.05f);
 
         GLES32.glBindBuffer(GLES32.GL_ARRAY_BUFFER, 0);
         GLES32.glBindVertexArray(0);

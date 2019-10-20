@@ -1,4 +1,4 @@
-package com.rtr.rotatingArms;
+package com.rtr.rotatingArm;
 
 
 public class GLESMacros {
