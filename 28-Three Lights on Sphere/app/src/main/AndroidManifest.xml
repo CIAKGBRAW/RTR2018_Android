@@ -3,7 +3,7 @@
     package="com.rtr.threeLightsOnSphere">
 
     <uses-sdk
-        android:targetSdkVersion="28"
+        android:targetSdkVersion="29"
         android:minSdkVersion="18" />
 
     <uses-feature 

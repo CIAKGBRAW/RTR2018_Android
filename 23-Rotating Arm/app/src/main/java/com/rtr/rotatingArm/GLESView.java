@@ -38,6 +38,8 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
 
     private float[] perspectiveProjectionMatrix = new float[16];
 
+    private Stack stack;
+
 	public GLESView(Context drawingContext) {
 		super(drawingContext);
 		context = drawingContext;
@@ -275,7 +277,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         float[] sphereVertices  = new float[3*30*31*2];
         float[] sphereNormals   = new float[3*30*31*2];
         float[] sphereTexcoords = new float[2*30*31*2];
-        coords = GenerateSphereCoords(0.5f, 30, sphereVertices, sphereNormals, sphereTexcoords);
+        coords = Sphere.GenerateSphereCoords(0.5f, 30, sphereVertices, sphereNormals, sphereTexcoords);
 
         // create vao
         GLES32.glGenVertexArrays(1, vao, 0);
@@ -304,7 +306,7 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         GLES32.glVertexAttribPointer(GLESMacros.AMC_ATTRIBUTE_POSITION, 3, GLES32.GL_FLOAT, false, 0, 0);
         GLES32.glEnableVertexAttribArray(GLESMacros.AMC_ATTRIBUTE_POSITION);
 
-        GLES32.glVertexAttrib3f(AMC_ATTRIBUTE_COLOR, 0.5f, 0.35f, 0.05f);
+        GLES32.glVertexAttrib3f(GLESMacros.AMC_ATTRIBUTE_COLOR, 0.5f, 0.35f, 0.05f);
 
         GLES32.glBindBuffer(GLES32.GL_ARRAY_BUFFER, 0);
         GLES32.glBindVertexArray(0);
@@ -315,11 +317,13 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
         GLES32.glClearDepthf(1.0f);
 
         // clear the screen by OpenGL
-        GLES32.glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+        GLES32.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
         // enable depth
         GLES32.glEnable(GLES32.GL_DEPTH_TEST);
         GLES32.glDepthFunc(GLES32.GL_LEQUAL);
+
+        stack = new Stack();
 
         Matrix.setIdentityM(perspectiveProjectionMatrix, 0);
     }
@@ -347,40 +351,134 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
 
         //declaration of matrices
         float[] translationMatrix = new float[16];
+        float[] scaleMatrix = new float[16];
+        float[] rotationMatrix = new float[16];
         float[] modelViewMatrix = new float[16];
         float[] modelViewProjectionMatrix = new float[16];
 
         // intialize above matrices to identity
         Matrix.setIdentityM(translationMatrix, 0);
+        Matrix.setIdentityM(scaleMatrix, 0);
+        Matrix.setIdentityM(rotationMatrix, 0);
         Matrix.setIdentityM(modelViewMatrix, 0);
         Matrix.setIdentityM(modelViewProjectionMatrix, 0);
 
+        //stack.push(new Mat4(modelViewMatrix));
+
         // perform necessary transformations
-        Matrix.translateM(translationMatrix, 0,
-            0.0f, 0.0f, -3.0f);
+        Matrix.setLookAtM(translationMatrix, 0,
+            0.0f, 0.0f, -12.0f);
 
         // do necessary matrix multiplication
         Matrix.multiplyMM(modelViewMatrix, 0,
             modelViewMatrix, 0,
             translationMatrix, 0);
 
+        stack.push(new Mat4(modelViewMatrix));
+
+        Matrix.setRotateM(rotationMatrix, 0,
+            (float)shoulder, 0.0f, 0.0f, 1.0f);
+
+        Matrix.setIdentityM(translationMatrix, 0);
+        Matrix.translateM(translationMatrix, 0,
+            1.0f, 0.0f, 0.0f);
+
+        Matrix.multiplyMM(modelViewMatrix, 0,
+            modelViewMatrix, 0,
+            rotationMatrix, 0);
+        
+        Matrix.multiplyMM(modelViewMatrix, 0,
+            modelViewMatrix, 0,
+            translationMatrix, 0);
+
+        stack.push(new Mat4(modelViewMatrix));
+
+        // GLES32.glPolygonMode(GLES32.GL_FRONT_AND_BACK, GLES32.GL_FILL);
+
+        Matrix.scaleM(scaleMatrix, 0,
+            2.0f, 0.5f, 1.0f);
+
+        Matrix.multiplyMM(modelViewMatrix, 0,
+            modelViewMatrix, 0,
+            scaleMatrix, 0);
+
+        // stack.push(new Mat4(modelViewMatrix));
+
+        // send necessary matrices to shader in respective uniforms
+        Matrix.multiplyMM(modelViewProjectionMatrix, 0,
+            perspectiveProjectionMatrix, 0,
+            modelViewMatrix, 0);
+        
+        GLES32.glUniformMatrix4fv(mvpUniform, 1, false, modelViewProjectionMatrix, 0);
+
+        // bind with vao (this will avoid many binding to vbo)
+        GLES32.glBindVertexArray(vao[0]);
+
+        // draw necessary scene
+        GLES32.glDrawArrays(GLES32.GL_TRIANGLE_FAN, 0, 3 * coords);
+
+        // unbind vao
+        GLES32.glBindVertexArray(0);
+
+        // Mat4 poped = stack.pop();
+        // for(int i = 0; i < 16; i++)
+        modelViewMatrix = stack.pop().get();
+
+        Matrix.setIdentityM(translationMatrix, 0);
+        Matrix.translateM(translationMatrix, 0,
+            1.0f, 0.0f, 0.0f);
+
+        Matrix.multiplyMM(modelViewMatrix, 0,
+            modelViewMatrix, 0,
+            translationMatrix, 0);
+
+        Matrix.setIdentityM(rotationMatrix, 0);
+        Matrix.setRotateM(rotationMatrix, 0,
+            (float)elbow, 0.0f, 0.0f, 1.0f);
+
+        Matrix.multiplyMM(modelViewMatrix, 0,
+            modelViewMatrix, 0,
+            rotationMatrix, 0);
+
+        Matrix.setIdentityM(translationMatrix, 0);
+        Matrix.translateM(translationMatrix, 0,
+            1.0f, 0.0f, 0.0f);
+
+        Matrix.multiplyMM(modelViewMatrix, 0,
+            modelViewMatrix, 0,
+            translationMatrix, 0);
+        
+        // stack.push(new Mat4(modelViewMatrix));
+
+        Matrix.setIdentityM(scaleMatrix, 0);
+        Matrix.scaleM(scaleMatrix, 0,
+            2.0f, 0.5f, 1.0f);
+
+        Matrix.multiplyMM(modelViewMatrix, 0,
+            modelViewMatrix, 0,
+            scaleMatrix, 0);
+
+        // stack.push(new Mat4(modelViewMatrix));
+
+        // send necessary matrices to shader in respective uniforms
+        Matrix.setIdentityM(modelViewProjectionMatrix, 0);
         Matrix.multiplyMM(modelViewProjectionMatrix, 0,
             perspectiveProjectionMatrix, 0,
             modelViewMatrix, 0);
 
-        // send necessary matrices to shader in respective uniforms
         GLES32.glUniformMatrix4fv(mvpUniform, 1, false, modelViewProjectionMatrix, 0);
 
         // bind with vao (this will avoid many binding to vbo)
-        GLES32.glBindVertexArray(vao[0]);  
-
-        // bind with textures
+        GLES32.glBindVertexArray(vao[0]);
 
         // draw necessary scene
-        GLES32.glDrawArrays(GLES32.GL_TRIANGLES, 0, 3);
+        GLES32.glDrawArrays(GLES32.GL_TRIANGLE_FAN, 0, 3 * coords);
 
         // unbind vao
         GLES32.glBindVertexArray(0);
+
+        //stack.resetStack();
+        stack.pop();
 
         // unuse program
         GLES32.glUseProgram(0);
@@ -388,9 +486,9 @@ public class GLESView extends GLSurfaceView implements GLSurfaceView.Renderer, O
     }
 
     private void uninitialize() {
-        if (vbo[0] != 0) {
-            GLES32.glDeleteBuffers(1, vbo, 0);
-            vbo[0] = 0;
+        if (vboPos[0] != 0) {
+            GLES32.glDeleteBuffers(1, vboPos, 0);
+            vboPos[0] = 0;
         }
 
         if (vao[0] != 0) {

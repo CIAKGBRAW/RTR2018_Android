@@ -1,23 +1,25 @@
 package com.rtr.rotatingArm;
 
+
 public class Stack {
 
-    private float[][] _stack;
+    private Mat4[] _stack;
     private int sp;
 
     public Stack() {
-        _stack = new float[16][10];
+        _stack = new Mat4[10];
         sp = -1;
     }
 
     public void resetStack() {
+        System.out.println("RTR: STACK RESET\n");
         sp = -1;
     }
 
-    public void push(float[] data) {
+    public void push(Mat4 data) {
         if (sp == 10 - 1)
         {
-            System.out.println("STACK OVERFLOW\n");
+            System.out.println("RTR: STACK OVERFLOW\n");
         }
         else
         {
@@ -26,8 +28,8 @@ public class Stack {
         }
     }
 
-    public float[] pop() {
-        float[] data = new float[16];
+    public Mat4 pop() {
+        Mat4 data = new Mat4();
         if (sp > -1)
         {
             data = _stack[sp];
@@ -35,17 +37,22 @@ public class Stack {
         }
         else
         {
-            System.out.println("STACK UNDERFLOW\n");
+            System.out.println("RTR: STACK UNDERFLOW\n");
         }
+        System.out.println("RTR: STACK POP: \n");
+        
         return data;
     }
 
-    float[] peek() {
-        if (sp > -1)
-        {
+    Mat4 peek() {
+        if (sp > -1) {
+            System.out.println("RTR: STACK PEEK: \n");
+            Mat4 data = _stack[sp];
+            
             return _stack[sp];
         }
-        return new float[16];
+
+        return new Mat4();
     }
 
 
